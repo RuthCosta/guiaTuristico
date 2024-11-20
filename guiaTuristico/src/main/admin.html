@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Gerenciar Usuários</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container my-5">
+    <h1 class="text-center">Gerenciar Usuários</h1>
+
+    <!-- Formulário -->
+    <form id="userForm" class="mb-4">
+        <input type="hidden" id="editId">
+        <div class="mb-3">
+            <label for="userName" class="form-label">Nome</label>
+            <input type="text" id="userName" class="form-control" placeholder="Nome do usuário" required>
+        </div>
+        <div class="mb-3">
+            <label for="userEmail" class="form-label">Email</label>
+            <input type="email" id="userEmail" class="form-control" placeholder="Email do usuário" required>
+        </div>
+        <div class="d-grid">
+            <button type="submit" class="btn btn-primary">Salvar</button>
+        </div>
+    </form>
+
+    <!-- Tabela -->
+    <table class="table table-bordered">
+        <thead class="table-dark">
+        <tr>
+            <th>#</th>
+            <th>Nome</th>
+            <th>Email</th>
+            <th>Ações</th>
+        </tr>
+        </thead>
+        <tbody id="userTable"></tbody>
+    </table>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script>
+    const API_URL = "http://localhost:63342/api/users";
+    const userForm = document.getElementById('userForm');
+    const userTable = document.getElementById('userTable');
+    let users = [];
+
+    // Renderizar usuários
+    function renderUsers() {
+        userTable.innerHTML = users.map((user, index) => `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${user.name}</td>
+                    <td>${user.email}</td>
+                    <td>
+                        <button class="btn btn-warning btn-sm" onclick="editUser('${user.id}')">Editar</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteUser('${user.id}')">Excluir</button>
+                    </td>
+                </tr>
+            `).join('');
+    }
+
+    // Buscar usuários
+    function fetchUsers() {
+        axios.get("http://localhost:63342/api/users").then(response => {
+            users = response.data;
+            renderUsers();
+        });
+    }
+
+    // Salvar usuário
+    userForm.addEventListener('submit', event => {
+        event.preventDefault();
+        const id = document.getElementById('editId').value;
+        const name = document.getElementById('userName').value;
+        const email = document.getElementById('userEmail').value;
+
+        const user = { name, email };
+        if (id) {
+            axios.put(`http://localhost:63342/api/users/${id}`, user).then(fetchUsers);
+        } else {
+            axios.post("http://localhost:63342/api/users", user).then(fetchUsers);
+        }
+        userForm.reset();
+    });
+
+    // Editar usuário
+    function editUser(id) {
+        const user = users.find(u => u.id === id);
+        document.getElementById('editId').value = user.id;
+        document.getElementById('userName').value = user.name;
+        document.getElementById('userEmail').value = user.email;
+    }
+
+    // Excluir usuário
+    function deleteUser(id) {
+        axios.delete(`http://localhost:63342/api/users/${id}`).then(fetchUsers);
+    }
+
+    fetchUsers();
+</script>
+</body>
+</html>
